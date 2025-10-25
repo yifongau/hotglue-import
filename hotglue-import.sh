@@ -33,7 +33,7 @@ hrefToFileName() {
 
 }
 
-imgSrctoFileName() {
+imgSrcToFileName() {
 	url=$1
 
 	# image files in query string format, assuming .png format
@@ -43,7 +43,6 @@ imgSrctoFileName() {
 	fi
 
 }
-
 
 # This is the big recursive function
 getLinkedFiles() {
@@ -65,7 +64,7 @@ getLinkedFiles() {
 		if test -f ./$childFileName; then
 			echo "$childFileName already exists, doing nothing"
 		else
-			sleep 1
+#			sleep 1
 			curl "$childUrl" --create-dirs --output ./$childFileName
 		fi
 
