@@ -18,6 +18,10 @@ sedEscape() {
 	echo $escapedString
 }
 
+urlDecode() {
+	: "${*//+/ }"; echo -e "${_//%/\\x}"; 
+}
+
 hrefToFileName() {
 	url=$1
 
@@ -44,8 +48,8 @@ imgSrcToFileName() {
 
 	# image files in query string format, assuming .png format
 	if grepString=$(echo "$url" | grep -Po "\?.*?$"); then
-		fileName=$(xBaseName $( echo $grepString | tr -d '/') "?" ".png")
-		echo "img/$fileName"
+		fileName="img/$(xBaseName $( echo $grepString | tr -d '/') "?" ".png")"
+		echo $fileName
 	fi
 
 }
@@ -71,7 +75,6 @@ processLinkedFile() {
 	sed -i "s|${sedString}|\.\/${childFileName}|g" $parentFileName
 
 }
-
 
 # This is the big recursive function
 getLinkedFiles() {
