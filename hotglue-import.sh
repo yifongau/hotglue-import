@@ -12,6 +12,12 @@ xBaseName() {
 
 }
 
+sedEscape() {
+	rawString=$1
+	escapedString=$(echo "$rawString" | sed -r 's/([\$\.\*\/\[\\^])/\\\1/g'| sed 's/[]]/\[]]/g')
+	echo $escapedString
+}
+
 hrefToFileName() {
 	url=$1
 
@@ -44,6 +50,27 @@ imgSrcToFileName() {
 
 }
 
+processLinkedFile() {
+	href=$1
+	parentFileName=$2
+
+	# sanitize URL of linked file
+	childUrl=$( echo $href | tr -d '"')
+	childFileName=$(imgSrcToFileName $childUrl)
+
+	# curl the childUrl and save to filename
+	if test -f ./$childFileName; then
+		echo "$childFileName already exists, doing nothing"
+	else
+		#sleep 1
+		curl "$childUrl" --create-dirs --output ./$childFileName
+		sedString=$(sedEscape "$childUrl")
+		sed -i "s|${sedString}|${childFileName}|g" $parentFileName
+	fi
+
+}
+
+
 # This is the big recursive function
 getLinkedFiles() {
 	parentFileName=$1
@@ -66,6 +93,8 @@ getLinkedFiles() {
 		else
 #			sleep 1
 			curl "$childUrl" --create-dirs --output ./$childFileName
+			sedString=$(sedEscape "$childUrl")
+			sed -i "s|${sedString}|${childFileName}|g" $parentFileName
 		fi
 
 	done <<< "$imgSrcList"
