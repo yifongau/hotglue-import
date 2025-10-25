@@ -57,15 +57,18 @@ processLinkedFile() {
 
 	# curl the childUrl and save to filename
 	if test -f ./$childFileName; then
-		echo "$childFileName already exists, doing nothing"
+		echo "$childFileName already exists, not curling"
 	else
 		#sleep 1 (in case of rate limiting)
+		echo "Curling $childUrl to $childFileName"
 		curl "$childUrl" --create-dirs --output ./$childFileName
 
-		# replace url reference in source to local copy
-		sedString=$(sedEscape "$childUrl")
-		sed -i "s|${sedString}|${childFileName}|g" $parentFileName
 	fi
+
+	# replace url reference in source to local copy
+	echo "$parentFileName: $childUrl -> $childFileName"
+	sedString=$(sedEscape "$childUrl")
+	sed -i "s|${sedString}|\.\/${childFileName}|g" $parentFileName
 
 }
 
@@ -114,7 +117,10 @@ getLinkedFiles() {
 	while IFS= read -r htmlFile ; do 
 
 		if [[ ! ${alreadyRecursed[@]} =~ $childFileName ]]; then
+			echo "Recursing into $childFileName"
 			getLinkedFiles "$childFileName"
+		else
+			echo "Not recursing into $childFileName (already recursed)"
 
 		fi
 	done <<< "$htmlFiles"
