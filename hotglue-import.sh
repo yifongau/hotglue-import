@@ -51,19 +51,18 @@ imgSrcToFileName() {
 }
 
 processLinkedFile() {
-	href=$1
-	parentFileName=$2
-
-	# sanitize URL of linked file
-	childUrl=$( echo $href | tr -d '"')
-	childFileName=$(imgSrcToFileName $childUrl)
+	childUrl=$1
+	childFileName=$2
+	parentFileName=$3
 
 	# curl the childUrl and save to filename
 	if test -f ./$childFileName; then
 		echo "$childFileName already exists, doing nothing"
 	else
-		#sleep 1
+		#sleep 1 (in case of rate limiting)
 		curl "$childUrl" --create-dirs --output ./$childFileName
+
+		# replace url reference in source to local copy
 		sedString=$(sedEscape "$childUrl")
 		sed -i "s|${sedString}|${childFileName}|g" $parentFileName
 	fi
@@ -87,15 +86,7 @@ getLinkedFiles() {
 		childUrl=$( echo $href | tr -d '"')
 		childFileName=$(imgSrcToFileName $childUrl)
 
-		# curl the childUrl and save to filename
-		if test -f ./$childFileName; then
-			echo "$childFileName already exists, doing nothing"
-		else
-#			sleep 1
-			curl "$childUrl" --create-dirs --output ./$childFileName
-			sedString=$(sedEscape "$childUrl")
-			sed -i "s|${sedString}|${childFileName}|g" $parentFileName
-		fi
+		processLinkedFile "$childUrl" "$childFileName" "$parentFileName"
 
 	done <<< "$imgSrcList"
 
@@ -106,14 +97,7 @@ getLinkedFiles() {
 		childUrl=$( echo $href | tr -d '"')
 		childFileName=$(hrefToFileName $childUrl)
 
-		# curl the childUrl and save to filename
-		if test -f ./$childFileName; then
-			echo "$childFileName already exists, doing nothing"
-		else
-			sleep 1
-			curl "$childUrl" --create-dirs --output ./$childFileName
-		fi
-
+		processLinkedFile "$childUrl" "$childFileName" "$parentFileName"
 
 		# Remember any files ending in .html
 		if echo $childFileName | grep ".html" > /dev/null; then
